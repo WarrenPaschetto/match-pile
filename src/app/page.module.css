@@ -209,200 +209,202 @@
   }
 }
 
+.messageBar {
+  position: relative;
+}
+
+.lives {
+  position: absolute;
+  right: 14px;
+  display: flex;
+  gap: 3px;
+  font-size: 1rem;
+}
+
+.lifeActive {
+  color: #ff4d67;
+  text-shadow: 0 2px 7px rgb(255 55 85 / 45%);
+}
+
+.lifeLost {
+  color: rgb(255 255 255 / 18%);
+}
+
 .matchTray {
   position: absolute;
   z-index: 5;
   left: 50%;
-  bottom: 18px;
-  width: min(calc(100% - 28px), 340px);
-  padding: 10px;
+  bottom: 14px;
+  width: min(calc(100% - 24px), 410px);
+  padding: 9px 11px 11px;
   transform: translateX(-50%);
-  border: 2px solid rgb(255 255 255 / 22%);
-  border-radius: 20px;
-  background: linear-gradient(180deg, rgb(51 66 82 / 96%), rgb(24 34 45 / 97%));
+  border: 2px solid rgb(255 255 255 / 18%);
+  border-radius: 17px;
+  background: linear-gradient(180deg, rgb(49 64 80 / 97%), rgb(20 29 39 / 98%));
   box-shadow:
-    0 12px 28px rgb(0 0 0 / 40%),
-    inset 0 1px 0 rgb(255 255 255 / 15%);
+    0 12px 28px rgb(0 0 0 / 42%),
+    inset 0 1px 0 rgb(255 255 255 / 13%);
+  pointer-events: none;
   transition:
     border-color 180ms ease,
-    background 180ms ease,
-    transform 180ms ease;
-  pointer-events: none;
+    background 180ms ease;
 }
 
 .trayHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 7px;
-  padding: 0 4px;
-  color: #cbd8e5;
-  font-size: 0.66rem;
+  margin-bottom: 5px;
+  padding: 0 3px;
+  color: #c8d5e2;
+  font-size: 0.61rem;
   font-weight: 900;
   letter-spacing: 0.11em;
 }
 
 .trayHeader strong {
-  color: #ffffff;
+  color: white;
 }
 
 .traySlots {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
 }
 
 .traySlot {
-  min-height: 74px;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  border: 2px dashed rgb(255 255 255 / 18%);
-  border-radius: 14px;
-  background: rgb(0 0 0 / 25%);
-  box-shadow: inset 0 4px 10px rgb(0 0 0 / 22%);
-  transition:
-    border-color 180ms ease,
-    background 180ms ease,
-    transform 180ms ease;
-}
-
-.traySlotFilled {
-  border-style: solid;
-  border-color: rgb(255 255 255 / 45%);
-  background: rgb(255 255 255 / 10%);
-  animation: trayPieceArrival 220ms ease-out;
-}
-
-.emptySlotNumber {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  place-items: center;
-  border: 2px solid rgb(255 255 255 / 16%);
-  border-radius: 50%;
-  color: rgb(255 255 255 / 28%);
-  font-size: 0.8rem;
-  font-weight: 900;
-}
-
-.trayPieceContent {
+  position: relative;
+  min-width: 0;
+  height: 55px;
   display: flex;
-  align-items: center;
-  gap: 11px;
-  color: #ffffff;
-  font-size: 0.75rem;
-  font-weight: 800;
-  text-transform: capitalize;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 5px;
 }
 
-.trayShape {
+.traySlotLine {
+  position: absolute;
+  right: 3px;
+  bottom: 4px;
+  left: 3px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 25%);
+  box-shadow:
+    0 2px 3px rgb(0 0 0 / 35%),
+    inset 0 1px 0 rgb(255 255 255 / 20%);
+}
+
+.traySlotFilled .traySlotLine {
+  background: rgb(255 255 255 / 65%);
+}
+
+.smallTrayPiece {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: 45px;
+  height: 45px;
+  place-items: center;
+  animation: smallTrayPieceArrival 220ms ease-out;
+}
+
+.smallTrayShape {
   --piece-color: #ffffff;
 
-  width: 42px;
-  height: 42px;
-  flex: 0 0 auto;
+  width: 31px;
+  height: 31px;
   background: var(--piece-color);
   box-shadow:
-    inset -7px -8px 10px rgb(0 0 0 / 20%),
-    inset 5px 5px 8px rgb(255 255 255 / 24%),
-    0 5px 9px rgb(0 0 0 / 25%);
+    inset -5px -6px 7px rgb(0 0 0 / 22%),
+    inset 4px 4px 6px rgb(255 255 255 / 25%),
+    0 4px 6px rgb(0 0 0 / 32%);
 }
 
-.trayShape_box {
-  border-radius: 9px;
+.smallTrayShape_box {
+  border-radius: 6px;
   transform: rotate(8deg);
 }
 
-.trayShape_sphere {
+.smallTrayShape_sphere {
   border-radius: 50%;
 }
 
-.trayShape_cone {
-  border-radius: 5px;
+.smallTrayShape_cone {
+  border-radius: 4px;
   clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
 }
 
-.trayShape_cylinder {
-  width: 36px;
-  border-radius: 50% / 18%;
+.smallTrayShape_cylinder {
+  width: 27px;
+  border-radius: 50% / 17%;
 }
 
-.trayShape_torus {
-  width: 43px;
-  height: 43px;
-  border: 10px solid var(--piece-color);
+.smallTrayShape_torus {
+  width: 32px;
+  height: 32px;
+  border: 8px solid var(--piece-color);
   border-radius: 50%;
   background: transparent;
   box-shadow:
-    inset 0 0 7px rgb(0 0 0 / 32%),
-    0 5px 9px rgb(0 0 0 / 25%);
+    inset 0 0 5px rgb(0 0 0 / 35%),
+    0 4px 6px rgb(0 0 0 / 32%);
 }
 
-.trayShape_capsule {
-  width: 30px;
+.smallTrayShape_capsule {
+  width: 23px;
   border-radius: 999px;
   transform: rotate(12deg);
 }
 
+.smallTrayPieceMatching {
+  animation: matchingPiecePulse 360ms ease infinite alternate;
+}
+
 .matchTraySuccess {
-  border-color: #57ef8e;
+  border-color: #58ed8e;
   background: linear-gradient(
     180deg,
-    rgb(38 112 68 / 98%),
-    rgb(19 61 39 / 98%)
+    rgb(35 106 64 / 98%),
+    rgb(18 57 36 / 98%)
   );
-  transform: translateX(-50%) scale(1.04);
-  animation: correctTrayPulse 420ms ease;
 }
 
-.matchTraySuccess .traySlot {
-  border-color: #8affad;
-  background: rgb(109 255 157 / 13%);
-}
-
-.matchTrayWrong {
-  border-color: #ff6675;
+.matchTrayFull {
+  border-color: #ff586a;
   background: linear-gradient(
     180deg,
-    rgb(126 43 52 / 98%),
-    rgb(71 24 31 / 98%)
+    rgb(126 39 51 / 98%),
+    rgb(69 22 30 / 98%)
   );
-  animation: wrongTrayShake 360ms ease;
+  animation: fullTrayShake 420ms ease;
 }
 
-.matchTrayWrong .traySlot {
-  border-color: #ff7c87;
-  background: rgb(255 80 96 / 13%);
-}
-
-@keyframes trayPieceArrival {
+@keyframes smallTrayPieceArrival {
   from {
     opacity: 0;
-    transform: translateY(-15px) scale(0.7);
+    transform: translateY(-22px) scale(0.55) rotate(-10deg);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0) scale(1) rotate(0);
   }
 }
 
-@keyframes correctTrayPulse {
-  0% {
-    transform: translateX(-50%) scale(1);
+@keyframes matchingPiecePulse {
+  from {
+    transform: scale(1);
+    filter: brightness(1);
   }
 
-  50% {
-    transform: translateX(-50%) scale(1.07);
-  }
-
-  100% {
-    transform: translateX(-50%) scale(1.04);
+  to {
+    transform: scale(1.18);
+    filter: brightness(1.35);
   }
 }
 
-@keyframes wrongTrayShake {
+@keyframes fullTrayShake {
   0%,
   100% {
     transform: translateX(-50%);
@@ -422,5 +424,28 @@
 
   80% {
     transform: translateX(calc(-50% + 5px));
+  }
+}
+
+@media (max-width: 390px) {
+  .smallTrayPiece {
+    width: 39px;
+    height: 43px;
+  }
+
+  .smallTrayShape {
+    width: 28px;
+    height: 28px;
+  }
+
+  .smallTrayShape_torus {
+    width: 29px;
+    height: 29px;
+    border-width: 7px;
+  }
+
+  .lives {
+    right: 8px;
+    font-size: 0.85rem;
   }
 }
