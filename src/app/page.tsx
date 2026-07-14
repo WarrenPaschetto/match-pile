@@ -1,12 +1,23 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { Float, RoundedBox } from "@react-three/drei";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { RoundedBox } from "@react-three/drei";
+import {
+    CuboidCollider,
+    Physics,
+    RigidBody,
+} from "@react-three/rapier";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import type { ThreeEvent } from "@react-three/fiber";
 import styles from "./page.module.css";
 
-type ShapeType = "box" | "sphere" | "cone" | "cylinder" | "torus" | "capsule";
+type ShapeType =
+    | "box"
+    | "sphere"
+    | "cone"
+    | "cylinder"
+    | "torus"
+    | "capsule";
 
 type GameObject = {
     id: string;
@@ -64,21 +75,6 @@ const PAIR_DEFINITIONS: Array<{
     },
 ];
 
-const POSITIONS: Array<[number, number, number]> = [
-    [-2.5, 1.9, 0.4],
-    [2.4, -1.7, 0.7],
-    [1.3, 2.1, 0.2],
-    [-1.4, -1.8, 0.8],
-    [0.2, 1.3, 1.1],
-    [-2.7, -0.4, 0.1],
-    [2.6, 0.5, 0.4],
-    [-0.3, -0.7, 1.3],
-    [1.3, -0.5, 0.5],
-    [-1.1, 0.4, 0.9],
-    [0.4, -2.2, 0.2],
-    [0.1, 2.6, 0.6],
-];
-
 function shuffle<T>(items: T[]): T[] {
     const shuffled = [...items];
 
@@ -106,16 +102,25 @@ function createGameObjects(): GameObject[] {
         },
     ]);
 
-    return shuffle(pairs).map((item, index) => ({
-        ...item,
-        position: POSITIONS[index],
-        rotation: [
-            Math.random() * Math.PI,
-            Math.random() * Math.PI,
-            Math.random() * Math.PI,
-        ],
-        scale: 0.78 + Math.random() * 0.22,
-    }));
+    return shuffle(pairs).map((item, index) => {
+        const column = index % 4;
+        const row = Math.floor(index / 4);
+
+        return {
+            ...item,
+            position: [
+                -2.25 + column * 1.5 + (Math.random() - 0.5) * 0.35,
+                3.5 + row * 1.25 + Math.random() * 1.2,
+                (Math.random() - 0.5) * 1.8,
+            ],
+            rotation: [
+                Math.random() * Math.PI,
+                Math.random() * Math.PI,
+                Math.random() * Math.PI,
+            ],
+            scale: 0.72 + Math.random() * 0.16,
+        };
+    });
 }
 
 function ShapeGeometry({ shape }: { shape: ShapeType }) {
@@ -156,20 +161,23 @@ function ObjectPiece({
 
     const materialColor = selected ? "#ffffff" : item.color;
 
-    if (item.shape === "box") {
-        return (
-            <Float
-                speed={selected ? 4 : 1.6}
-                rotationIntensity={selected ? 0.35 : 0.08}
-                floatIntensity={selected ? 0.35 : 0.1}
-            >
+    return (
+        <RigidBody
+            position={item.position}
+            rotation={item.rotation}
+            colliders="hull"
+            restitution={0.15}
+            friction={0.9}
+            linearDamping={0.5}
+            angularDamping={0.7}
+            canSleep
+        >
+            {item.shape === "box" ? (
                 <RoundedBox
                     args={[1.25, 1.25, 1.25]}
                     radius={0.18}
                     smoothness={5}
-                    position={item.position}
-                    rotation={item.rotation}
-                    scale={selected ? item.scale * 1.18 : item.scale}
+                    scale={selected ? item.scale * 1.12 : item.scale}
                     onClick={handleClick}
                     castShadow
                     receiveShadow
@@ -179,38 +187,70 @@ function ObjectPiece({
                         roughness={0.34}
                         metalness={0.08}
                         emissive={selected ? item.color : "#000000"}
-                        emissiveIntensity={selected ? 0.55 : 0}
+                        emissiveIntensity={selected ? 0.6 : 0}
                     />
                 </RoundedBox>
-            </Float>
-        );
-    }
+            ) : (
+                <mesh
+                    scale={selected ? item.scale * 1.12 : item.scale}
+                    onClick={handleClick}
+                    castShadow
+                    receiveShadow
+                >
+                    <ShapeGeometry shape={item.shape} />
 
+                    <meshStandardMaterial
+                        color={materialColor}
+                        roughness={0.34}
+                        metalness={0.08}
+                        emissive={selected ? item.color : "#000000"}
+                        emissiveIntensity={selected ? 0.6 : 0}
+                    />
+                </mesh>
+            )}
+        </RigidBody>
+    );
+}
+
+function PhysicsContainer() {
     return (
-        <Float
-            speed={selected ? 4 : 1.6}
-            rotationIntensity={selected ? 0.35 : 0.08}
-            floatIntensity={selected ? 0.35 : 0.1}
-        >
-            <mesh
-                position={item.position}
-                rotation={item.rotation}
-                scale={selected ? item.scale * 1.18 : item.scale}
-                onClick={handleClick}
-                castShadow
-                receiveShadow
-            >
-                <ShapeGeometry shape={item.shape} />
+        <>
+            <RigidBody type="fixed" friction={1}>
+                <mesh
+                    position={[0, -3.25, 0]}
+                    receiveShadow
+                >
+                    <boxGeometry args={[8, 0.5, 5]} />
 
-                <meshStandardMaterial
-                    color={materialColor}
-                    roughness={0.34}
-                    metalness={0.08}
-                    emissive={selected ? item.color : "#000000"}
-                    emissiveIntensity={selected ? 0.55 : 0}
+                    <meshStandardMaterial
+                        color="#283747"
+                        roughness={0.95}
+                    />
+                </mesh>
+            </RigidBody>
+
+            <RigidBody type="fixed">
+                <CuboidCollider
+                    args={[0.25, 4, 2.5]}
+                    position={[-4, 0, 0]}
                 />
-            </mesh>
-        </Float>
+
+                <CuboidCollider
+                    args={[0.25, 4, 2.5]}
+                    position={[4, 0, 0]}
+                />
+
+                <CuboidCollider
+                    args={[4, 4, 0.25]}
+                    position={[0, 0, -2.5]}
+                />
+
+                <CuboidCollider
+                    args={[4, 4, 0.25]}
+                    position={[0, 0, 2.5]}
+                />
+            </RigidBody>
+        </>
     );
 }
 
@@ -231,8 +271,8 @@ function GameScene({
         <Canvas
             shadows
             camera={{
-                position: [0, 0, 9],
-                fov: 48,
+                position: [0, 1.2, 10.5],
+                fov: 46,
             }}
             gl={{
                 antialias: true,
@@ -241,34 +281,42 @@ function GameScene({
         >
             <color attach="background" args={["#17202a"]} />
 
-            <ambientLight intensity={1.6} />
+            <ambientLight intensity={1.5} />
 
             <directionalLight
-                position={[4, 7, 8]}
-                intensity={2.4}
+                position={[4, 8, 8]}
+                intensity={2.5}
                 castShadow
+                shadow-mapSize-width={2048}
+                shadow-mapSize-height={2048}
             />
 
             <directionalLight
-                position={[-5, -2, 5]}
+                position={[-5, 1, 4]}
                 intensity={0.8}
             />
 
             <pointLight
-                position={[0, 0, 5]}
-                intensity={12}
-                distance={15}
+                position={[0, 3, 6]}
+                intensity={10}
+                distance={18}
             />
 
-            {objects.map((item) => (
-                <ObjectPiece
-                    key={item.id}
-                    item={item}
-                    selected={selectedIds.includes(item.id)}
-                    disabled={inputLocked}
-                    onSelect={onSelect}
-                />
-            ))}
+            <Suspense fallback={null}>
+                <Physics gravity={[0, -9.81, 0]}>
+                    <PhysicsContainer />
+
+                    {objects.map((item) => (
+                        <ObjectPiece
+                            key={item.id}
+                            item={item}
+                            selected={selectedIds.includes(item.id)}
+                            disabled={inputLocked}
+                            onSelect={onSelect}
+                        />
+                    ))}
+                </Physics>
+            </Suspense>
         </Canvas>
     );
 }
@@ -283,6 +331,7 @@ export default function Home() {
     const [gameStarted, setGameStarted] = useState(false);
     const [gameOver, setGameOver] = useState(false);
     const [hasWon, setHasWon] = useState(false);
+    const [gameNumber, setGameNumber] = useState(0);
 
     const remainingPairs = Math.ceil(objects.length / 2);
 
@@ -301,6 +350,7 @@ export default function Home() {
         setGameStarted(true);
         setGameOver(false);
         setHasWon(false);
+        setGameNumber((currentGameNumber) => currentGameNumber + 1);
     }, []);
 
     useEffect(() => {
@@ -419,6 +469,7 @@ export default function Home() {
                 <div className={styles.gameBoard}>
                     {objects.length > 0 && (
                         <GameScene
+                            key={gameNumber}
                             objects={objects}
                             selectedIds={selectedIds}
                             inputLocked={inputLocked}
