@@ -7,7 +7,14 @@ import {
     Physics,
     RigidBody,
 } from "@react-three/rapier";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import {
+    Suspense,
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
+import type { CSSProperties } from "react";
 import type { ThreeEvent } from "@react-three/fiber";
 import styles from "./page.module.css";
 
@@ -18,6 +25,8 @@ type ShapeType =
     | "cylinder"
     | "torus"
     | "capsule";
+
+type TrayStatus = "idle" | "match" | "wrong";
 
 type GameObject = {
     id: string;
@@ -109,7 +118,9 @@ function createGameObjects(): GameObject[] {
         return {
             ...item,
             position: [
-                -2.25 + column * 1.5 + (Math.random() - 0.5) * 0.35,
+                -2.25 +
+                    column * 1.5 +
+                    (Math.random() - 0.5) * 0.35,
                 3.5 + row * 1.25 + Math.random() * 1.2,
                 (Math.random() - 0.5) * 1.8,
             ],
@@ -177,7 +188,11 @@ function ObjectPiece({
                     args={[1.25, 1.25, 1.25]}
                     radius={0.18}
                     smoothness={5}
-                    scale={selected ? item.scale * 1.12 : item.scale}
+                    scale={
+                        selected
+                            ? item.scale * 1.12
+                            : item.scale
+                    }
                     onClick={handleClick}
                     castShadow
                     receiveShadow
@@ -186,13 +201,21 @@ function ObjectPiece({
                         color={materialColor}
                         roughness={0.34}
                         metalness={0.08}
-                        emissive={selected ? item.color : "#000000"}
+                        emissive={
+                            selected
+                                ? item.color
+                                : "#000000"
+                        }
                         emissiveIntensity={selected ? 0.6 : 0}
                     />
                 </RoundedBox>
             ) : (
                 <mesh
-                    scale={selected ? item.scale * 1.12 : item.scale}
+                    scale={
+                        selected
+                            ? item.scale * 1.12
+                            : item.scale
+                    }
                     onClick={handleClick}
                     castShadow
                     receiveShadow
@@ -203,7 +226,11 @@ function ObjectPiece({
                         color={materialColor}
                         roughness={0.34}
                         metalness={0.08}
-                        emissive={selected ? item.color : "#000000"}
+                        emissive={
+                            selected
+                                ? item.color
+                                : "#000000"
+                        }
                         emissiveIntensity={selected ? 0.6 : 0}
                     />
                 </mesh>
@@ -310,7 +337,9 @@ function GameScene({
                         <ObjectPiece
                             key={item.id}
                             item={item}
-                            selected={selectedIds.includes(item.id)}
+                            selected={selectedIds.includes(
+                                item.id,
+                            )}
                             disabled={inputLocked}
                             onSelect={onSelect}
                         />
@@ -321,17 +350,108 @@ function GameScene({
     );
 }
 
+function TrayPiece({ item }: { item: GameObject }) {
+    const customProperties = {
+        "--piece-color": item.color,
+    } as CSSProperties;
+
+    return (
+        <div className={styles.trayPieceContent}>
+            <div
+                className={`${styles.trayShape} ${
+                    styles[`trayShape_${item.shape}`]
+                }`}
+                style={customProperties}
+            />
+
+            <span>{item.shape}</span>
+        </div>
+    );
+}
+
+type MatchTrayProps = {
+    selectedObjects: GameObject[];
+    status: TrayStatus;
+};
+
+function MatchTray({
+    selectedObjects,
+    status,
+}: MatchTrayProps) {
+    const trayStatusClass =
+        status === "match"
+            ? styles.matchTraySuccess
+            : status === "wrong"
+              ? styles.matchTrayWrong
+              : "";
+
+    return (
+        <div
+            className={`${styles.matchTray} ${trayStatusClass}`}
+        >
+            <div className={styles.trayHeader}>
+                <span>MATCH TRAY</span>
+
+                <strong>
+                    {status === "match"
+                        ? "MATCH!"
+                        : status === "wrong"
+                          ? "TRY AGAIN"
+                          : `${selectedObjects.length}/2`}
+                </strong>
+            </div>
+
+            <div className={styles.traySlots}>
+                {[0, 1].map((slotIndex) => {
+                    const item =
+                        selectedObjects[slotIndex];
+
+                    return (
+                        <div
+                            key={slotIndex}
+                            className={`${styles.traySlot} ${
+                                item
+                                    ? styles.traySlotFilled
+                                    : ""
+                            }`}
+                        >
+                            {item ? (
+                                <TrayPiece item={item} />
+                            ) : (
+                                <span
+                                    className={
+                                        styles.emptySlotNumber
+                                    }
+                                >
+                                    {slotIndex + 1}
+                                </span>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
 export default function Home() {
     const [objects, setObjects] = useState<GameObject[]>([]);
-    const [selectedObjects, setSelectedObjects] = useState<GameObject[]>([]);
-    const [timeRemaining, setTimeRemaining] = useState(INITIAL_TIME);
+    const [selectedObjects, setSelectedObjects] = useState<
+        GameObject[]
+    >([]);
+    const [timeRemaining, setTimeRemaining] =
+        useState(INITIAL_TIME);
     const [score, setScore] = useState(0);
     const [inputLocked, setInputLocked] = useState(false);
-    const [message, setMessage] = useState("Find two matching objects");
+    const [message, setMessage] = useState(
+        "Find two matching objects",
+    );
     const [gameStarted, setGameStarted] = useState(false);
     const [gameOver, setGameOver] = useState(false);
     const [hasWon, setHasWon] = useState(false);
     const [gameNumber, setGameNumber] = useState(0);
+    const [trayStatus, setTrayStatus] =
+        useState<TrayStatus>("idle");
 
     const remainingPairs = Math.ceil(objects.length / 2);
 
@@ -350,7 +470,10 @@ export default function Home() {
         setGameStarted(true);
         setGameOver(false);
         setHasWon(false);
-        setGameNumber((currentGameNumber) => currentGameNumber + 1);
+        setTrayStatus("idle");
+        setGameNumber(
+            (currentGameNumber) => currentGameNumber + 1,
+        );
     }, []);
 
     useEffect(() => {
@@ -387,7 +510,8 @@ export default function Home() {
                 gameOver ||
                 hasWon ||
                 selectedObjects.some(
-                    (selectedItem) => selectedItem.id === item.id,
+                    (selectedItem) =>
+                        selectedItem.id === item.id,
                 )
             ) {
                 return;
@@ -395,53 +519,74 @@ export default function Home() {
 
             if (selectedObjects.length === 0) {
                 setSelectedObjects([item]);
+                setTrayStatus("idle");
                 setMessage("Now find its match");
                 return;
             }
 
             const firstObject = selectedObjects[0];
-            const isMatch = firstObject.pairId === item.pairId;
+            const isMatch =
+                firstObject.pairId === item.pairId;
 
             setSelectedObjects([firstObject, item]);
             setInputLocked(true);
 
             if (isMatch) {
+                setTrayStatus("match");
                 setMessage("Match!");
 
                 window.setTimeout(() => {
                     setObjects((currentObjects) => {
-                        const updatedObjects = currentObjects.filter(
-                            (currentObject) =>
-                                currentObject.id !== firstObject.id &&
-                                currentObject.id !== item.id,
-                        );
+                        const updatedObjects =
+                            currentObjects.filter(
+                                (currentObject) =>
+                                    currentObject.id !==
+                                        firstObject.id &&
+                                    currentObject.id !==
+                                        item.id,
+                            );
 
                         if (updatedObjects.length === 0) {
                             setHasWon(true);
-                            setMessage("You cleared the pile!");
+                            setMessage(
+                                "You cleared the pile!",
+                            );
                         }
 
                         return updatedObjects;
                     });
 
-                    setScore((currentScore) => currentScore + 100);
+                    setScore(
+                        (currentScore) =>
+                            currentScore + 100,
+                    );
                     setSelectedObjects([]);
+                    setTrayStatus("idle");
                     setInputLocked(false);
-                }, 450);
+                }, 650);
 
                 return;
             }
 
+            setTrayStatus("wrong");
             setMessage("Not a match");
 
             window.setTimeout(() => {
                 setSelectedObjects([]);
-                setScore((currentScore) => Math.max(0, currentScore - 10));
+                setScore((currentScore) =>
+                    Math.max(0, currentScore - 10),
+                );
+                setTrayStatus("idle");
                 setInputLocked(false);
                 setMessage("Try another pair");
-            }, 650);
+            }, 850);
         },
-        [gameOver, hasWon, inputLocked, selectedObjects],
+        [
+            gameOver,
+            hasWon,
+            inputLocked,
+            selectedObjects,
+        ],
     );
 
     return (
@@ -449,8 +594,12 @@ export default function Home() {
             <section className={styles.gameShell}>
                 <header className={styles.topBar}>
                     <div className={styles.statBlock}>
-                        <span className={styles.statLabel}>LEVEL</span>
-                        <strong className={styles.statValue}>1</strong>
+                        <span className={styles.statLabel}>
+                            LEVEL
+                        </span>
+                        <strong className={styles.statValue}>
+                            1
+                        </strong>
                     </div>
 
                     <div className={styles.timer}>
@@ -459,12 +608,18 @@ export default function Home() {
                     </div>
 
                     <div className={styles.statBlock}>
-                        <span className={styles.statLabel}>SCORE</span>
-                        <strong className={styles.statValue}>{score}</strong>
+                        <span className={styles.statLabel}>
+                            SCORE
+                        </span>
+                        <strong className={styles.statValue}>
+                            {score}
+                        </strong>
                     </div>
                 </header>
 
-                <div className={styles.messageBar}>{message}</div>
+                <div className={styles.messageBar}>
+                    {message}
+                </div>
 
                 <div className={styles.gameBoard}>
                     {objects.length > 0 && (
@@ -477,15 +632,32 @@ export default function Home() {
                         />
                     )}
 
+                    {!gameOver && !hasWon && (
+                        <MatchTray
+                            selectedObjects={
+                                selectedObjects
+                            }
+                            status={trayStatus}
+                        />
+                    )}
+
                     {(gameOver || hasWon) && (
                         <div className={styles.overlay}>
-                            <div className={styles.resultCard}>
-                                <span className={styles.resultEmoji}>
+                            <div
+                                className={styles.resultCard}
+                            >
+                                <span
+                                    className={
+                                        styles.resultEmoji
+                                    }
+                                >
                                     {hasWon ? "🎉" : "⏰"}
                                 </span>
 
                                 <h1>
-                                    {hasWon ? "Pile Cleared!" : "Time’s Up!"}
+                                    {hasWon
+                                        ? "Pile Cleared!"
+                                        : "Time’s Up!"}
                                 </h1>
 
                                 <p>Your score: {score}</p>
@@ -493,7 +665,9 @@ export default function Home() {
                                 <button
                                     type="button"
                                     onClick={startNewGame}
-                                    className={styles.primaryButton}
+                                    className={
+                                        styles.primaryButton
+                                    }
                                 >
                                     Play Again
                                 </button>
@@ -504,7 +678,9 @@ export default function Home() {
 
                 <footer className={styles.bottomPanel}>
                     <div>
-                        <span className={styles.bottomLabel}>PAIRS LEFT</span>
+                        <span className={styles.bottomLabel}>
+                            PAIRS LEFT
+                        </span>
                         <strong>{remainingPairs}</strong>
                     </div>
 
